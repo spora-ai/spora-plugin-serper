@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/spora-ai/spora-core/v0.3.0/plugin.schema.json",
+  "slug": "serper",
+  "description": "Serper.dev Google search results for Spora agents.",
+  "class": "Spora\\\\Plugins\\\\Serper\\\\SerperPlugin",
+  "icon": "puzzle",
+  "autoload": {
+    "psr-4": {
+      "Spora\\\\Plugins\\\\Serper\\\\": "src/"
+    }
+  }
+}
