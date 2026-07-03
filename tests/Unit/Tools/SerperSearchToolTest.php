@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use Psr\Log\LoggerInterface;
 use Spora\Plugins\Serper\Tools\SerperSearchTool;
 use Spora\Services\ToolConfigService;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use Psr\Log\LoggerInterface;
 
 it('returns error if api key is missing', function () {
     $config = Mockery::mock(ToolConfigService::class);
