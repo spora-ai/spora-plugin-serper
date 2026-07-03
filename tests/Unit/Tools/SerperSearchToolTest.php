@@ -6,6 +6,7 @@ use Spora\Plugins\Serper\Tools\SerperSearchTool;
 use Spora\Services\ToolConfigService;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
+use Psr\Log\LoggerInterface;
 
 it('returns error if api key is missing', function () {
     $config = Mockery::mock(ToolConfigService::class);
@@ -259,4 +260,43 @@ it('places_search makes correct http request and parses results', function () {
         ->and($result->content)->toContain('Restaurant XYZ')
         ->and($result->content)->toContain('456 Oak Ave')
         ->and($result->content)->toContain('Italian');
+});
+
+it('returns error for unknown operation', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $client = Mockery::mock(HttpClientInterface::class);
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => 'unknown_op', 'q' => 'foo'], 1);
+    expect($result->success)->toBeFalse()
+        ->and($result->content)->toContain('Unknown operation: unknown_op');
+});
+
+it('returns error when http request throws', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->andReturn(['core.serper.api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $client->allows('request')->andThrow(new RuntimeException('Connection refused'));
+
+    $logger = Mockery::mock(LoggerInterface::class);
+    $logger->allows('error');
+    $logger->allows('debug');
+
+    $tool = new SerperSearchTool($config, $client, $logger);
+
+    $result = $tool->execute(['action' => 'search', 'q' => 'foo'], 1);
+    expect($result->success)->toBeFalse()
+        ->and($result->content)->toContain('Search tool error')
+        ->and($result->content)->toContain('Connection refused');
+});
+
+it('describeAction returns human-readable description for each operation', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $client = Mockery::mock(HttpClientInterface::class);
+    $tool = new SerperSearchTool($config, $client);
+
+    expect($tool->describeAction(['action' => 'search', 'q' => 'apple']))->toContain("Search Google via Serper.dev for: 'apple'");
+    expect($tool->describeAction(['action' => 'image_search', 'q' => 'cat']))->toContain("Search Google Images for: 'cat'");
+    expect($tool->describeAction(['action' => 'unknown_op', 'q' => 'x']))->toContain("Serper search: 'x'");
 });
