@@ -16,12 +16,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Spora\\\\Plugins\\\\Serper\\\\": "src/"
+      "Spora\\Plugins\\Serper\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Spora\\\\Plugins\\\\Serper\\\\Tests\\\\": "tests/"
+      "Spora\\Plugins\\Serper\\Tests\\": "tests/"
     }
   },
   "scripts": {
