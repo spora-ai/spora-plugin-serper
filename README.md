@@ -18,11 +18,9 @@ After install the tool `serper_search` is registered with nine operations. Pick 
 
 ## Configuration
 
-Settings → Tools → Serper Search. Sign up at
-<https://serper.dev> to obtain an API key (2,500 free queries on signup; paid
-plans from $50/mo per 50k queries at time of writing). Serper.dev's
-["World's Fastest & Cheapest Google Search API"](https://serper.dev) is the
-upstream source — this plugin is a thin PHP wrapper, not a search engine.
+Settings → Tools → Serper Search. Sign up at <https://serper.dev> to obtain
+an API key (2,500 free queries on signup). Serper.dev is the upstream
+source — this plugin is a thin PHP wrapper, not a search engine.
 
 | Setting | Required | Default |
 |---|---|---|
