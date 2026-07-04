@@ -9,28 +9,12 @@ places — backed by structured Google results (organic, knowledge graph,
 ## Installation
 
 ```bash
-# Recommended — install via the Spora CLI
 php bin/spora plugin:install spora-ai/spora-plugin-serper
-php bin/spora spora:install   # applies the plugin's migration
-
-# For development against a sibling git clone, pass --path:
-php bin/spora plugin:install spora-ai/spora-plugin-serper --path=/abs/path/to/checkout
-
-# Alternative — drop a clone into the Spora repo
-git clone https://github.com/spora-ai/spora-plugin-serper.git plugins/serper
-php bin/spora spora:install
-
-# Alternative — external path (no Spora checkout changes)
-git clone https://github.com/spora-ai/spora-plugin-serper.git /opt/spora-plugins/serper
-echo 'SPORA_PLUGINS_PATHS=/opt/spora-plugins/serper' >> .env
-php bin/spora spora:install
 ```
 
-After install the tool `serper_search` is registered with nine operations
-(all enabled by default, none require approval): `search`, `image_search`,
-`news_search`, `video_search`, `scholar_search`, `shopping_search`,
-`patents_search`, `maps_search`, `places_search`. Pick an operation by
-passing `"operation": "<name>"` to the tool.
+For local development against a sibling checkout, pass `--path=/abs/path/to/checkout`.
+
+After install the tool `serper_search` is registered with nine operations. Pick an operation by passing `"operation": "<name>"` to the tool — see [Per-tool operations](#per-tool-operations).
 
 ## Configuration
 
