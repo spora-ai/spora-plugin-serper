@@ -22,7 +22,7 @@ it('returns error if api key is missing', function () {
 
 it('makes correct http request and parses organic and answer box results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -52,7 +52,7 @@ it('makes correct http request and parses organic and answer box results', funct
 
 it('image_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -78,7 +78,7 @@ it('image_search makes correct http request and parses results', function () {
 
 it('news_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -105,7 +105,7 @@ it('news_search makes correct http request and parses results', function () {
 
 it('video_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -131,7 +131,7 @@ it('video_search makes correct http request and parses results', function () {
 
 it('scholar_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -157,7 +157,7 @@ it('scholar_search makes correct http request and parses results', function () {
 
 it('shopping_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -184,7 +184,7 @@ it('shopping_search makes correct http request and parses results', function () 
 
 it('patents_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -210,7 +210,7 @@ it('patents_search makes correct http request and parses results', function () {
 
 it('maps_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -237,7 +237,7 @@ it('maps_search makes correct http request and parses results', function () {
 
 it('places_search makes correct http request and parses results', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $response = Mockery::mock(ResponseInterface::class);
@@ -274,7 +274,7 @@ it('returns error for unknown operation', function () {
 
 it('returns error when http request throws', function () {
     $config = Mockery::mock(ToolConfigService::class);
-    $config->allows('getEffectiveSettings')->andReturn(['core.serper.api_key' => 'serp_123']);
+    $config->allows('getEffectiveSettings')->andReturn(['api_key' => 'serp_123']);
 
     $client = Mockery::mock(HttpClientInterface::class);
     $client->allows('request')->andThrow(new RuntimeException('Connection refused'));

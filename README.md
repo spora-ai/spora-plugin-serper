@@ -24,8 +24,8 @@ source — this plugin is a thin PHP wrapper, not a search engine.
 
 | Setting | Required | Default |
 |---|---|---|
-| `core.serper.api_key` | yes | — |
-| `core.serper.http_timeout` | no | `30` (seconds; falls back to `SPORA_TOOL_HTTP_TIMEOUT` env) |
+| `api_key` | yes | — |
+| `http_timeout` | no | `30` (seconds; falls back to `SPORA_TOOL_HTTP_TIMEOUT` env) |
 
 `api_key` is encrypted at rest by Spora's `ToolConfigService`, masked in the
 UI, and never logged. The plugin uses the public endpoint
