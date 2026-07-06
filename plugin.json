@@ -3,5 +3,5 @@
   "slug": "serper",
   "description": "Serper.dev Google search results for Spora agents.",
   "class": "Spora\\Plugins\\Serper\\SerperPlugin",
-  "icon": "puzzle"
+  "icon": "search"
 }
