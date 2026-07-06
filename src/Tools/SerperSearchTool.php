@@ -36,14 +36,14 @@ use Throwable;
 #[ToolOperation(name: 'maps_search', description: 'Search Google Maps for places and locations', enabledByDefault: true, requiresApprovalByDefault: false)]
 #[ToolOperation(name: 'places_search', description: 'Search for specific places with detailed information', enabledByDefault: true, requiresApprovalByDefault: false)]
 #[ToolSetting(
-    key: 'core.serper.api_key',
+    key: 'api_key',
     label: 'Serper.dev API Key',
     type: 'password',
     description: 'API key for serper.dev',
     required: true,
 )]
 #[ToolSetting(
-    key: 'core.serper.http_timeout',
+    key: 'http_timeout',
     label: 'HTTP Timeout',
     type: 'text',
     description: 'Seconds before an HTTP request fails (default: 30)',
@@ -67,8 +67,8 @@ final class SerperSearchTool extends AbstractTool
 
     private function effectiveTimeout(array $settings): int
     {
-        if (isset($settings['core.serper.http_timeout']) && (int) $settings['core.serper.http_timeout'] > 0) {
-            return (int) $settings['core.serper.http_timeout'];
+        if (isset($settings['http_timeout']) && (int) $settings['http_timeout'] > 0) {
+            return (int) $settings['http_timeout'];
         }
         $envTimeout = (int) ($_ENV['SPORA_TOOL_HTTP_TIMEOUT'] ?? getenv('SPORA_TOOL_HTTP_TIMEOUT') ?: 0);
         return $envTimeout > 0 ? $envTimeout : 30;
@@ -89,7 +89,7 @@ final class SerperSearchTool extends AbstractTool
         }
 
         $settings = $this->configService->getEffectiveSettings(static::class, $agentId, $userId);
-        $apiKey = $settings['core.serper.api_key'] ?? '';
+        $apiKey = $settings['api_key'] ?? '';
         if (empty($apiKey)) {
             return new ToolResult(false, self::ERR_API_KEY_MISSING);
         }
@@ -147,7 +147,7 @@ final class SerperSearchTool extends AbstractTool
 
         $response = $this->httpClient->request('POST', $url, [
             'headers' => [
-                'X-API-KEY'    => $settings['core.serper.api_key'],
+                'X-API-KEY'    => $settings['api_key'],
                 'Content-Type' => 'application/json',
             ],
             'json' => $payload,
