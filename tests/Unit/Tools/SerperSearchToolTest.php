@@ -300,3 +300,185 @@ it('describeAction returns human-readable description for each operation', funct
     expect($tool->describeAction(['action' => 'image_search', 'q' => 'cat']))->toContain("Search Google Images for: 'cat'");
     expect($tool->describeAction(['action' => 'unknown_op', 'q' => 'x']))->toContain("Serper search: 'x'");
 });
+
+it('uses http_timeout setting when provided', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123', 'http_timeout' => 60]);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->allows('getStatusCode')->andReturn(200);
+    $response->allows('toArray')->andReturn(['organic' => []]);
+
+    $client->expects('request')->with('POST', 'https://google.serper.dev/search', Mockery::on(function ($options) {
+        return $options['timeout'] === 60;
+    }))->andReturn($response);
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => 'search', 'q' => 'apple'], 1);
+    expect($result->success)->toBeTrue();
+});
+
+it('returns error for empty search query', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $client->shouldNotReceive('request');
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => 'search', 'q' => ''], 1);
+    expect($result->success)->toBeFalse()
+        ->and($result->content)->toContain('cannot be empty');
+});
+
+it('returns empty-query error for every operation', function (string $action) {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $client->shouldNotReceive('request');
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => $action, 'q' => ''], 1);
+    expect($result->success)->toBeFalse()
+        ->and($result->content)->toContain('cannot be empty');
+})->with([
+    'image_search'    => ['image_search'],
+    'news_search'     => ['news_search'],
+    'video_search'    => ['video_search'],
+    'scholar_search'  => ['scholar_search'],
+    'shopping_search' => ['shopping_search'],
+    'patents_search'  => ['patents_search'],
+    'maps_search'     => ['maps_search'],
+    'places_search'   => ['places_search'],
+]);
+
+it('throws ToolHttpErrorException on 4xx response in search', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->allows('getStatusCode')->andReturn(500);
+    $response->allows('getContent')->with(false)->andReturn('{"message":"server error"}');
+
+    $client->allows('request')->andReturn($response);
+
+    $logger = Mockery::mock(LoggerInterface::class);
+    $logger->allows('error');
+    $logger->allows('debug');
+
+    $tool = new SerperSearchTool($config, $client, $logger);
+
+    $result = $tool->execute(['action' => 'search', 'q' => 'apple'], 1);
+    expect($result->success)->toBeFalse()
+        ->and($result->content)->toContain('Search tool error')
+        ->and($result->content)->toContain('HTTP 500');
+});
+
+it('renders answerBox snippet when answer is empty', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->allows('getStatusCode')->andReturn(200);
+    $response->allows('toArray')->andReturn([
+        'answerBox' => [
+            'snippet' => 'A short snippet from answer box',
+        ],
+        'organic' => [],
+    ]);
+
+    $client->allows('request')->andReturn($response);
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => 'search', 'q' => 'apple'], 1);
+    expect($result->success)->toBeTrue()
+        ->and($result->content)->toContain('Quick Snippet')
+        ->and($result->content)->toContain('A short snippet from answer box');
+});
+
+it('returns "no results found" branch for every operation', function (string $action, string $endpoint, string $resultKey, string $expectedMessage) {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->allows('getStatusCode')->andReturn(200);
+    $response->allows('toArray')->andReturn([$resultKey => []]);
+
+    $client->allows('request')->andReturn($response);
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => $action, 'q' => 'apple'], 1);
+    expect($result->success)->toBeTrue()
+        ->and($result->content)->toContain($expectedMessage);
+})->with([
+    'image_search'    => ['image_search',    'images',   'images',   'No image results found.'],
+    'news_search'     => ['news_search',     'news',     'news',     'No news results found.'],
+    'video_search'    => ['video_search',    'videos',   'videos',   'No video results found.'],
+    'scholar_search'  => ['scholar_search',  'scholar',  'organic',  'No scholar results found.'],
+    'shopping_search' => ['shopping_search', 'shopping', 'shopping', 'No shopping results found.'],
+    'patents_search'  => ['patents_search',  'patents',  'patents',  'No patent results found.'],
+    'maps_search'     => ['maps_search',     'maps',     'places',   'No map results found.'],
+    'places_search'   => ['places_search',   'places',   'places',   'No place results found.'],
+]);
+
+it('returns operation-specific error prefix when request throws for each operation', function (string $action, string $expectedPrefix) {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $client->allows('request')->andThrow(new RuntimeException('boom'));
+
+    $logger = Mockery::mock(LoggerInterface::class);
+    $logger->allows('error');
+    $logger->allows('debug');
+
+    $tool = new SerperSearchTool($config, $client, $logger);
+
+    $result = $tool->execute(['action' => $action, 'q' => 'apple'], 1);
+    expect($result->success)->toBeFalse()
+        ->and($result->content)->toContain($expectedPrefix)
+        ->and($result->content)->toContain('boom');
+})->with([
+    'search'           => ['search',          'Search tool error'],
+    'image_search'     => ['image_search',    'Image search error'],
+    'news_search'      => ['news_search',     'News search error'],
+    'video_search'     => ['video_search',    'Video search error'],
+    'scholar_search'   => ['scholar_search',  'Scholar search error'],
+    'shopping_search'  => ['shopping_search', 'Shopping search error'],
+    'patents_search'   => ['patents_search',  'Patents search error'],
+    'maps_search'      => ['maps_search',     'Maps search error'],
+    'places_search'    => ['places_search',   'Places search error'],
+]);
+
+it('renders places_search URL field when present', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->allows('getStatusCode')->andReturn(200);
+    $response->allows('toArray')->andReturn([
+        'places' => [
+            ['title' => 'Restaurant ABC', 'URL' => 'https://restaurant.example/page'],
+        ],
+    ]);
+
+    $client->allows('request')->andReturn($response);
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => 'places_search', 'q' => 'restaurant'], 1);
+    expect($result->success)->toBeTrue()
+        ->and($result->content)->toContain('Restaurant ABC')
+        ->and($result->content)->toContain('https://restaurant.example/page');
+});
