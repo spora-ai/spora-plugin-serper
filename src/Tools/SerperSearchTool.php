@@ -436,29 +436,7 @@ final class SerperSearchTool extends AbstractTool
 
             $results = $data['organic'] ?? [];
             foreach ($results as $i => $patent) {
-                $num = $i + 1;
-                $output .= "[{$num}] {$patent['title']}\n";
-                if (!empty($patent['publicationNumber'])) {
-                    $output .= "Patent ID: {$patent['publicationNumber']}\n";
-                }
-                $date = $patent['publicationDate'] ?? $patent['grantDate'] ?? null;
-                if (!empty($date)) {
-                    $output .= "Date: {$date}\n";
-                }
-                if (!empty($patent['inventor'])) {
-                    $output .= "Inventor: {$patent['inventor']}\n";
-                }
-                if (!empty($patent['assignee'])) {
-                    $output .= "Assignee: {$patent['assignee']}\n";
-                }
-                $output .= "URL: {$patent['link']}\n";
-                if (!empty($patent['pdfUrl'])) {
-                    $output .= "PDF: {$patent['pdfUrl']}\n";
-                }
-                if (!empty($patent['snippet'])) {
-                    $output .= "{$patent['snippet']}\n";
-                }
-                $output .= "\n";
+                $this->appendPatent($output, $i + 1, $patent);
             }
 
             if (empty($results)) {
@@ -470,6 +448,40 @@ final class SerperSearchTool extends AbstractTool
             $this->logger?->error('Serper Patents Search Exception', ['exception' => $e]);
             return new ToolResult(false, 'Patents search error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Render one Serper.dev patent row into the agent-facing output.
+     * Extracted from {@see patentsSearch()} so the caller stays a pure
+     * flow (validate → request → loop → empty-check) and doesn't push
+     * SonarQube's per-function cognitive complexity over the threshold.
+     *
+     * @param array<string, mixed> $patent
+     */
+    private function appendPatent(string &$output, int $num, array $patent): void
+    {
+        $output .= "[{$num}] {$patent['title']}\n";
+        if (!empty($patent['publicationNumber'])) {
+            $output .= "Patent ID: {$patent['publicationNumber']}\n";
+        }
+        $date = $patent['publicationDate'] ?? $patent['grantDate'] ?? null;
+        if (!empty($date)) {
+            $output .= "Date: {$date}\n";
+        }
+        if (!empty($patent['inventor'])) {
+            $output .= "Inventor: {$patent['inventor']}\n";
+        }
+        if (!empty($patent['assignee'])) {
+            $output .= "Assignee: {$patent['assignee']}\n";
+        }
+        $output .= "URL: {$patent['link']}\n";
+        if (!empty($patent['pdfUrl'])) {
+            $output .= "PDF: {$patent['pdfUrl']}\n";
+        }
+        if (!empty($patent['snippet'])) {
+            $output .= "{$patent['snippet']}\n";
+        }
+        $output .= "\n";
     }
 
     /**
