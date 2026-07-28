@@ -230,10 +230,10 @@ final class SerperSearchTool extends AbstractTool
                 $num = $i + 1;
                 $output .= "[{$num}] {$image['title']}\n";
                 $output .= "Image URL: {$image['imageUrl']}\n";
-                if (!empty($image['sourceUrl'])) {
-                    $output .= "Source: {$image['sourceUrl']}";
-                    if (!empty($image['sourceName'])) {
-                        $output .= " ({$image['sourceName']})";
+                if (!empty($image['link'])) {
+                    $output .= "Source: {$image['link']}";
+                    if (!empty($image['source'])) {
+                        $output .= " ({$image['source']})";
                     }
                     $output .= "\n";
                 }
