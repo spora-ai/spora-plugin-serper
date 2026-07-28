@@ -60,7 +60,13 @@ it('image_search makes correct http request and parses results', function () {
     $response->allows('getStatusCode')->andReturn(200);
     $response->allows('toArray')->andReturn([
         'images' => [
-            ['title' => 'iPhone 15', 'imageUrl' => 'https://example.com/iphone.jpg', 'sourceUrl' => 'https://example.com', 'sourceName' => 'Example'],
+            [
+                'title' => 'Lion - Wikipedia',
+                'imageUrl' => 'https://upload.wikimedia.org/.../lion.jpg',
+                'link' => 'https://en.wikipedia.org/wiki/Lion',
+                'source' => 'Wikipedia',
+                'domain' => 'en.wikipedia.org',
+            ],
         ],
     ]);
 
@@ -72,8 +78,9 @@ it('image_search makes correct http request and parses results', function () {
 
     $result = $tool->execute(['action' => 'image_search', 'q' => 'iphone'], 1);
     expect($result->success)->toBeTrue()
-        ->and($result->content)->toContain('iPhone 15')
-        ->and($result->content)->toContain('https://example.com/iphone.jpg');
+        ->and($result->content)->toContain('Lion - Wikipedia')
+        ->and($result->content)->toContain('https://upload.wikimedia.org/.../lion.jpg')
+        ->and($result->content)->toContain('Source: https://en.wikipedia.org/wiki/Lion (Wikipedia)');
 });
 
 it('news_search makes correct http request and parses results', function () {
