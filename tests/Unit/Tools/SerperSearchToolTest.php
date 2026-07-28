@@ -191,8 +191,17 @@ it('patents_search makes correct http request and parses results', function () {
 
     $response->allows('getStatusCode')->andReturn(200);
     $response->allows('toArray')->andReturn([
-        'patents' => [
-            ['title' => 'Battery Patent', 'patentId' => 'US123456', 'date' => '2024-01-01', 'link' => 'https://patents.google.com/patent', 'snippet' => 'Improved battery tech'],
+        'organic' => [
+            [
+                'title' => 'Battery Patent',
+                'link' => 'https://patents.google.com/patent/US123456B2/en',
+                'snippet' => 'Improved battery tech',
+                'publicationNumber' => 'US123456B2',
+                'publicationDate' => '2024-01-01',
+                'inventor' => 'Jane Doe',
+                'assignee' => 'Acme Corp',
+                'pdfUrl' => 'https://patentimages.storage.googleapis.com/example.pdf',
+            ],
         ],
     ]);
 
@@ -205,7 +214,41 @@ it('patents_search makes correct http request and parses results', function () {
     $result = $tool->execute(['action' => 'patents_search', 'q' => 'battery'], 1);
     expect($result->success)->toBeTrue()
         ->and($result->content)->toContain('Battery Patent')
-        ->and($result->content)->toContain('US123456');
+        ->and($result->content)->toContain('Patent ID: US123456B2')
+        ->and($result->content)->toContain('Date: 2024-01-01')
+        ->and($result->content)->toContain('Inventor: Jane Doe')
+        ->and($result->content)->toContain('Assignee: Acme Corp')
+        ->and($result->content)->toContain('https://patents.google.com/patent/US123456B2/en')
+        ->and($result->content)->toContain('https://patentimages.storage.googleapis.com/example.pdf');
+});
+
+it('patents_search falls back to grantDate when publicationDate is missing', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->allows('getEffectiveSettings')->with(SerperSearchTool::class, 1, null)->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $response = Mockery::mock(ResponseInterface::class);
+
+    $response->allows('getStatusCode')->andReturn(200);
+    $response->allows('toArray')->andReturn([
+        'organic' => [
+            [
+                'title' => 'Solar Panel',
+                'link' => 'https://patents.google.com/patent/US777777B2/en',
+                'publicationNumber' => 'US777777B2',
+                'grantDate' => '2023-06-15',
+            ],
+        ],
+    ]);
+
+    $client->allows('request')->andReturn($response);
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $result = $tool->execute(['action' => 'patents_search', 'q' => 'solar'], 1);
+    expect($result->success)->toBeTrue()
+        ->and($result->content)->toContain('Patent ID: US777777B2')
+        ->and($result->content)->toContain('Date: 2023-06-15');
 });
 
 it('maps_search makes correct http request and parses results', function () {
@@ -426,7 +469,7 @@ it('returns "no results found" branch for every operation', function (string $ac
     'video_search'    => ['video_search',    'videos',   'videos',   'No video results found.'],
     'scholar_search'  => ['scholar_search',  'scholar',  'organic',  'No scholar results found.'],
     'shopping_search' => ['shopping_search', 'shopping', 'shopping', 'No shopping results found.'],
-    'patents_search'  => ['patents_search',  'patents',  'patents',  'No patent results found.'],
+    'patents_search'  => ['patents_search',  'patents',  'organic',  'No patent results found.'],
     'maps_search'     => ['maps_search',     'maps',     'places',   'No map results found.'],
     'places_search'   => ['places_search',   'places',   'places',   'No place results found.'],
 ]);

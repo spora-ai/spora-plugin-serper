@@ -434,23 +434,34 @@ final class SerperSearchTool extends AbstractTool
 
             $output = "Patent Results for '{$query}':\n\n";
 
-            foreach (($data['patents'] ?? []) as $i => $patent) {
+            $results = $data['organic'] ?? [];
+            foreach ($results as $i => $patent) {
                 $num = $i + 1;
                 $output .= "[{$num}] {$patent['title']}\n";
-                if (!empty($patent['patentId'])) {
-                    $output .= "Patent ID: {$patent['patentId']}\n";
+                if (!empty($patent['publicationNumber'])) {
+                    $output .= "Patent ID: {$patent['publicationNumber']}\n";
                 }
-                if (!empty($patent['date'])) {
-                    $output .= "Date: {$patent['date']}\n";
+                $date = $patent['publicationDate'] ?? $patent['grantDate'] ?? null;
+                if (!empty($date)) {
+                    $output .= "Date: {$date}\n";
+                }
+                if (!empty($patent['inventor'])) {
+                    $output .= "Inventor: {$patent['inventor']}\n";
+                }
+                if (!empty($patent['assignee'])) {
+                    $output .= "Assignee: {$patent['assignee']}\n";
                 }
                 $output .= "URL: {$patent['link']}\n";
+                if (!empty($patent['pdfUrl'])) {
+                    $output .= "PDF: {$patent['pdfUrl']}\n";
+                }
                 if (!empty($patent['snippet'])) {
                     $output .= "{$patent['snippet']}\n";
                 }
                 $output .= "\n";
             }
 
-            if (empty($data['patents'])) {
+            if (empty($results)) {
                 $output .= 'No patent results found.';
             }
 
