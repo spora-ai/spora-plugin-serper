@@ -1,19 +1,22 @@
 ---
 name: serper-search
-description: Use the Serper.dev Google search plugin — one tool, nine operations (web, images, news, videos, scholar, shopping, patents, maps, places) — and embed results in the reply. Use when the user asks to "search", "look up", "find online", "show me", "find a paper/video/image/news/restaurant/product/patent", or any task that needs fresh information from the web via Google.
+description: Use the Serper.dev Google search plugin — one tool, nine operations (web, images, news, videos, scholar, shopping, patents, maps, places) — and turn each row into a markdown link the chat surface actually renders. Use when the user asks to "search", "look up", "find online", "show me", or anything that needs a paper, video, image, news article, restaurant, product, or patent from the web via Google.
 license: MIT
 compatibility: spora>=0.7 spora-plugin-serper>=1.0
 metadata:
   author: spora-ai
-  version: "1.0"
+  version: "1.1"
 allowed-tools: Spora\Plugins\Serper\Tools\SerperSearchTool
 ---
 
 # Serper search
 
-One tool, one required argument. The tool returns plain-text output (already
-formatted as a numbered list). You render it in the reply — verbatim for most
-operations, with embed transformations for `image_search` and `video_search`.
+The plugin returns a numbered list per call. Your job is to render each
+row in the reply by adding markdown hyperlinks to the URLs the tool
+already printed — do not rewrite, reorder, summarise, or invent
+content. Two operations need a small transform: `image_search`
+becomes a markdown image; every operation's URLs become clickable
+links.
 
 ## Calling
 
@@ -21,9 +24,9 @@ operations, with embed transformations for `image_search` and `video_search`.
 serper_search(action: "<operation>", q: "<query>")
 ```
 
-`q` is the only required parameter. Pick the operation by intent; do **not**
-default to `search` when the user asked for images, news, videos, papers,
-products, patents, or local places.
+`q` is the only required parameter. Pick the operation by intent; do
+**not** default to `search` when the user asked for images, news,
+videos, papers, products, patents, or local places.
 
 | User intent                                  | Operation         | Underlying path |
 |----------------------------------------------|-------------------|-----------------|
@@ -37,111 +40,158 @@ products, patents, or local places.
 | Local businesses, "near me", addresses       | `maps_search`     | `/maps`         |
 | Specific place with hours and website        | `places_search`   | `/places`       |
 
-Make multiple calls **in parallel** when the user asked for more than one
-kind of result (e.g. "pictures AND news about X") — they are independent.
+Make multiple calls **in parallel** when the user asked for more than
+one kind of result — the endpoints are independent.
 
-## Rendering
+## Markdown surface — what renders, what doesn't
 
-The tool already prints a numbered list. **Echo it as-is** for `search`,
-`news_search`, `scholar_search`, `shopping_search`, `patents_search`,
-`maps_search`, and `places_search`. Each row already includes the title,
-URL/source/date/snippet as the tool formats it.
+Spora's chat surface is a plain markdown renderer.
 
-### Images — convert to a markdown image
+- **Renders:** `[label](https://url)`, `![alt](https://image-url)`,
+  bare `https://url`, bullet / numbered lists, headings, fenced code,
+  blockquotes.
+- **Stripped or silently dropped:** `<iframe>`, `<script>`, `data:`
+  URLs, `javascript:` URLs, raw HTML attributes.
 
-`image_search` rows look like:
+Do not produce any of the stripped forms. That includes synthesised
+YouTube `embed/` URLs, Vimeo `player/` URLs, or any other host's
+embed form — different hosts have different embed schemes,
+synthesising a wrong-host URL is a real bug, and even on the right
+host the result drops silently in chat.
+
+## Rendering rules per operation
+
+Every row the tool returns is the source of truth. Keep its title,
+Source/Date/Address/Phone/Rating/Hours/Website/Snippet/Patent-ID/
+Date/Inventor/Assignee/PDF lines verbatim — only the URL line(s)
+become links.
+
+- **`search`, `news_search`, `scholar_search`, `shopping_search`,
+  `patents_search`, `maps_search`, `places_search`** — turn every
+  `URL:` (and `PDF:` for patents) line into
+  `[title or label](https://…)`. Link label = the row title for
+  `URL:`, or `"PDF"` for `PDF:`. Keep every other field exactly as
+  the tool printed it.
+- **`places_search`** may include an additional `URL:` line (capital
+  `URL`, a Google Maps place link) — link it the same way. Don't
+  double-link the address; pick one URL per row.
+- **`image_search`** is the only exception:
+  - Turn the `Image URL:` line into `![title](image-url)`.
+  - Place the markdown image **above** the `[N] Title` caption.
+  - If the tool does not emit an `Image URL:` line (rare), link the
+    source page instead and keep the `Source:` line if the tool
+    printed one. Never synthesise an image URL.
+- **`video_search`** — turn the `URL:` line into `[title](url)`. Do
+  not try to identify the host or rewrite the URL: different video
+  hosts (YouTube, Vimeo, Dailymotion, TikTok, Rumble, etc.) each
+  have their own embed scheme, some tracks have regional/CAPTCHA
+  gates, and synthesising an embed URL is error-prone in every
+  direction. The plain link is the universally correct render.
+- **Empty-result text** (`No … results found.`) is the user-facing
+  message — relay it word-for-word and stop.
+
+### Worked example — image_search
+
+Tool output:
 
 ```
-[1] Title
-Image URL: https://...direct-image.jpg
-Source: https://...page (Wikipedia)
+Google Image Results for 'mountain sunset':
+
+[1] Mountain at sunset
+Image URL: https://upload.wikimedia.org/.../Sunset.jpg
 ```
 
-In the reply, render each one with the **direct image URL** in markdown:
+Rendered:
 
 ```markdown
-![Title](direct-image-url)
-[1] Title — [source page](page-url)
+![Mountain at sunset](https://upload.wikimedia.org/.../Sunset.jpg)
+[1] Mountain at sunset
 ```
 
-Use the direct `imageUrl` from the row — never link a page when an
-`imageUrl` is present (it renders inline). Only fall back to a linked
-thumbnail when no direct URL is returned.
+### Worked example — places_search
 
-### Videos — embed the top result, list the rest
-
-`video_search` rows look like:
+Tool output:
 
 ```
-[1] Title
-Source: YouTube
-Date: Aug 29, 2025
-URL: https://www.youtube.com/watch?v=XXXXXXXXXXX
+Place Results for 'Italian restaurants New York City':
+
+[1] Lupa Osteria
+Address: 170 Thompson St, New York, NY 10012
+Phone: (212) 982-5089
+Rating: 4.5
+Hours: Mon-Sun 12:00 PM-11:00 PM
+Website: https://lupaosteria.com
+URL: https://maps.google.com/?cid=12345
 ```
 
-Serper returns YouTube primarily. Embed **only the top result** as an
-iframe; the remaining rows go in the standard numbered list.
+Rendered (any list shape that preserves every fact works — pick what reads best):
 
-YouTube ID extraction:
-
-- `https://www.youtube.com/watch?v=VIDEO_ID` → use the `v=` value
-- `https://youtu.be/VIDEO_ID` → use the path segment
-- Other hosts (Vimeo, Dailymotion, TikTok) → do not embed; list as-is.
-
-Embed URL: `https://www.youtube.com/embed/VIDEO_ID`
-
-```html
-<iframe width="560" height="315"
-  src="https://www.youtube.com/embed/VIDEO_ID"
-  title="Title from the row"
-  frameborder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowfullscreen></iframe>
+```markdown
+[Lupa Osteria](https://maps.google.com/?cid=12345) — 170 Thompson St,
+(212) 982-5089, ★4.5, [website](https://lupaosteria.com),
+Mon-Sun 12:00 PM-11:00 PM
 ```
 
-Render the rest of the rows as the tool returns them (skip the embed for
-`[2]`, `[3]`, … — keeps the reply scannable, doesn't drown the user in
-iframes).
+The rule is "every URL field becomes a link and nothing else
+changes." Don't paraphrase, don't drop facts, don't merge rows.
 
 ## Output structure
 
-When combining several operations in one reply, group results under
-clear headings. The exact icons are decorative — replace with text if
-your renderer doesn't support them.
+When the reply combines several operations, group results under
+headings. The exact icons are decorative — drop them if your renderer
+doesn't support emoji. Within each group, render the rows with the
+URL fields turned into markdown links; leave everything else
+verbatim.
 
 ```markdown
-### 🔍 Web
-[tool output verbatim]
+### Web
 
-### 🖼️ Images
-![alt](direct-url)
-[1] Title — [source](page-url)
+[1] Page Title — [publisher](https://example.com/page)
+Snippet text…
 
-### 📰 News
-[tool output verbatim]
+### Images
 
-### 🎥 Videos
-<iframe ... src="https://www.youtube.com/embed/..." ...></iframe>
-[2] Title — [link](url)
-[3] Title — [link](url)
+![title](https://example.com/image.jpg)
+[1] Title
 
-### 📚 Scholar / 🛍️ Shopping / 📜 Patents / 📍 Maps / 🏷️ Places
-[tool output verbatim, one heading per kind]
+### News
+
+[1] Article — [Publisher](https://example.com/article) — Aug 29, 2025
+Snippet…
+
+### Videos
+
+- [Video Title](https://www.youtube.com/watch?v=…) — YouTube, Aug 29, 2025
+- [Second Video Title](https://vimeo.com/…) — Vimeo, Jun 12, 2024
+
+### Scholar / Shopping / Patents / Maps / Places
+
+(tool rows verbatim, one heading per kind, with URL lines turned into markdown links)
 ```
 
 ## Rules
 
-- **Always cite sources.** Every result needs a working URL in the reply.
-- **Never fabricate video IDs.** If the URL isn't YouTube-style, don't
-  embed — list the row with its link.
-- **Top result gets the embed, the rest get a list.** Cap at one iframe
-  per video batch; subsequent results in the same reply link only.
-- **Reuse the tool's number prefix `[N]`.** Preserving the numbering
-  lets the user match your reply back to the raw results when needed.
-- **If the tool returns "No … results found."** — relay it verbatim and
-  stop. Do not invent follow-up queries without the user's go-ahead.
-  For `patents_search` specifically, fall back to a broader or
-  rephrased `q` (e.g. drop `inventor:` operators) before giving up;
-  the upstream patents index is narrower than web search.
-- **Don't call the tool again to "verify" a result.** One call per
-  operation per user request is the rule — extra calls cost quota.
+- **Cite the source the tool returned.** Every URL you link must
+  come from the tool's output. Never construct a URL. Never trim
+  tracking parameters, downgrade `https://` to `http://`, or swap
+  the host.
+- **Markdown only.** No `<iframe>`, no `data:`, no `javascript:` —
+  Spora's chat surface drops them silently and the user sees
+  nothing where the embed should be. Don't synthesise host-specific
+  embed URLs (YouTube `embed/`, Vimeo `player/`, etc.) from a
+  watch URL.
+- **Use the tool's `Image URL:` line for the markdown image.**
+  Never link a source page when a direct image URL is present —
+  the inline image is the whole point. If the tool did not emit an
+  image URL (rare with Serper.dev), link the source page instead.
+- **Preserve the tool's `[N]` row numbers.** The user uses them to
+  refer back to specific results ("can you tell me more about [3]?").
+  Don't renumber or merge rows.
+- **If the tool emits `No … results found.`** — relay it verbatim
+  and stop. Don't invent follow-up queries. For `patents_search`,
+  broaden or rephrase `q`: Serper.dev's patents index is narrower
+  than web search, and the upstream API doesn't parse Google-style
+  operator prefixes (`inventor:`, `before:`, …) — so don't lean on
+  those.
+- **One call per operation per user request.** Extra "verification"
+  calls cost quota and don't change the answer.
