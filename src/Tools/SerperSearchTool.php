@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Spora\Plugins\Serper\Tools;
 
 use Psr\Log\LoggerInterface;
+use Spora\Services\PrincipalContext;
 use Spora\Services\ToolConfigService;
 use Spora\Tools\AbstractTool;
 use Spora\Tools\Attributes\Tool;
@@ -97,8 +98,13 @@ final class SerperSearchTool extends AbstractTool
         return ['query' => $query, 'settings' => $settings];
     }
 
-    public function execute(array $arguments, int $agentId, ?int $userId = null, ?int $taskId = null): ToolResult
-    {
+    public function execute(
+        array $arguments,
+        int $agentId,
+        ?int $userId = null,
+        ?int $taskId = null,
+        ?PrincipalContext $context = null,
+    ): ToolResult {
         $operation = $this->getOperationName($arguments);
         return match ($operation) {
             'search'           => $this->search($arguments, $agentId, $userId),
