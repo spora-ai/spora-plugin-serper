@@ -98,6 +98,12 @@ final class SerperSearchTool extends AbstractTool
         return ['query' => $query, 'settings' => $settings];
     }
 
+    /**
+     * @param int|null $userId Deprecated: the owner now comes from
+     *                          `$context->ownerUserId`, which always held this same
+     *                          value. Removed from the interface in core 0.30.0 —
+     *                          read the context instead.
+     */
     public function execute(
         array $arguments,
         int $agentId,
@@ -105,17 +111,19 @@ final class SerperSearchTool extends AbstractTool
         ?int $taskId = null,
         ?PrincipalContext $context = null,
     ): ToolResult {
+        $ownerId = $context?->ownerUserId;
+
         $operation = $this->getOperationName($arguments);
         return match ($operation) {
-            'search'           => $this->search($arguments, $agentId, $userId),
-            'image_search'     => $this->imageSearch($arguments, $agentId, $userId),
-            'news_search'      => $this->newsSearch($arguments, $agentId, $userId),
-            'video_search'     => $this->videoSearch($arguments, $agentId, $userId),
-            'scholar_search'   => $this->scholarSearch($arguments, $agentId, $userId),
-            'shopping_search'  => $this->shoppingSearch($arguments, $agentId, $userId),
-            'patents_search'   => $this->patentsSearch($arguments, $agentId, $userId),
-            'maps_search'      => $this->mapsSearch($arguments, $agentId, $userId),
-            'places_search'    => $this->placesSearch($arguments, $agentId, $userId),
+            'search'           => $this->search($arguments, $agentId, $ownerId),
+            'image_search'     => $this->imageSearch($arguments, $agentId, $ownerId),
+            'news_search'      => $this->newsSearch($arguments, $agentId, $ownerId),
+            'video_search'     => $this->videoSearch($arguments, $agentId, $ownerId),
+            'scholar_search'   => $this->scholarSearch($arguments, $agentId, $ownerId),
+            'shopping_search'  => $this->shoppingSearch($arguments, $agentId, $ownerId),
+            'patents_search'   => $this->patentsSearch($arguments, $agentId, $ownerId),
+            'maps_search'      => $this->mapsSearch($arguments, $agentId, $ownerId),
+            'places_search'    => $this->placesSearch($arguments, $agentId, $ownerId),
             default            => new ToolResult(false, "Unknown operation: {$operation}"),
         };
     }

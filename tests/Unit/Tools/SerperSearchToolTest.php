@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use Psr\Log\LoggerInterface;
+use Spora\Models\Principal;
 use Spora\Plugins\Serper\Tools\SerperSearchTool;
+use Spora\Services\PrincipalContext;
 use Spora\Services\ToolConfigService;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -531,4 +533,24 @@ it('renders places_search URL field when present', function () {
     expect($result->success)->toBeTrue()
         ->and($result->content)->toContain('Restaurant ABC')
         ->and($result->content)->toContain('https://restaurant.example/page');
+});
+
+it('scopes the settings lookup to the context owner, not the legacy user id', function () {
+    $config = Mockery::mock(ToolConfigService::class);
+    $config->expects('getEffectiveSettings')
+        ->with(SerperSearchTool::class, 1, 99)
+        ->andReturn(['api_key' => 'serp_123']);
+
+    $client = Mockery::mock(HttpClientInterface::class);
+    $response = Mockery::mock(ResponseInterface::class);
+    $response->allows('getStatusCode')->andReturn(200);
+    $response->allows('toArray')->andReturn(['organic' => []]);
+    $client->allows('request')->andReturn($response);
+
+    $tool = new SerperSearchTool($config, $client);
+
+    $context = new PrincipalContext(7, Principal::TYPE_USER, 99, 42);
+
+    $result = $tool->execute(['action' => 'search', 'q' => 'apple'], 1, 42, null, $context);
+    expect($result->success)->toBeTrue();
 });
