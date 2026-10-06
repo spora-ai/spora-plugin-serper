@@ -6,7 +6,7 @@ compatibility: spora>=0.7 spora-plugin-serper>=1.0
 metadata:
   author: spora-ai
   version: "1.1"
-allowed-tools: Spora\Plugins\Serper\Tools\SerperSearchTool
+allowed-tools: serper_search
 ---
 
 # Serper search
