@@ -1,0 +1,5 @@
+{
+  "Serper Search": "Serper-Suche",
+  "API key for serper.dev": "API-Schlüssel für serper.dev",
+  "Seconds before an HTTP request fails (default: 30)": "Sekunden, bis eine HTTP-Anfrage fehlschlägt (Standard: 30)"
+}
