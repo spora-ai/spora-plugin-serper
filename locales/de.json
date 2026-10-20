@@ -1,6 +1,5 @@
 {
   "Serper Search": "Serper-Suche",
   "API key for serper.dev": "API-Schlüssel für serper.dev",
-  "Seconds before an HTTP request fails (default: 30)": "Sekunden, bis eine HTTP-Anfrage fehlschlägt (Standard: 30)",
   "Serper.dev Google search results for Spora agents.": "Google-Suchergebnisse über Serper.dev für Spora-Agenten."
 }
