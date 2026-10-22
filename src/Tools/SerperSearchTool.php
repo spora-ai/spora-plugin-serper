@@ -17,10 +17,7 @@ use Spora\Tools\ValueObjects\ToolResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 
-/**
- * Searches the web via Google using the Serper.dev API.
- * Supports web search, images, news, video, scholar, shopping, patents, maps, and places.
- */
+/** Searches the web via Google using the Serper.dev API. */
 #[Tool(
     name: 'serper_search',
     description: 'Search the web using Google Search via Serper.dev. Use this for general queries, looking up specific websites, or finding real-time information.',
@@ -76,10 +73,6 @@ final class SerperSearchTool extends AbstractTool
     }
 
     /**
-     * Validate inputs and resolve effective settings.
-     * Returns a failure ToolResult when validation fails, or an array with
-     * 'query' and 'settings' when OK to proceed.
-     *
      * @return ToolResult|array{query: string, settings: array<string, mixed>}
      */
     private function validateAndResolveSettings(array $arguments, int $agentId, ?int $userId): ToolResult|array
@@ -458,10 +451,8 @@ final class SerperSearchTool extends AbstractTool
     }
 
     /**
-     * Render one Serper.dev patent row into the agent-facing output.
-     * Extracted from {@see patentsSearch()} so the caller stays a pure
-     * flow (validate → request → loop → empty-check) and doesn't push
-     * SonarQube's per-function cognitive complexity over the threshold.
+     * Kept out of {@see patentsSearch()} so the caller's cognitive complexity
+     * stays under SonarQube's threshold.
      *
      * @param array<string, mixed> $patent
      */
@@ -491,9 +482,6 @@ final class SerperSearchTool extends AbstractTool
         $output .= "\n";
     }
 
-    /**
-     * Append a place entry to $output from a normalized row.
-     */
     private function appendPlace(string &$output, int $num, array $place): void
     {
         $output .= "[{$num}] {$place['title']}\n";
